@@ -1,0 +1,99 @@
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.compose import ColumnTransformer
+
+# Load your dataset
+df = pd.read_csv('your_dataset.csv')
+
+# Step 2: Separate numerical and categorical variables
+numerical_columns = df.select_dtypes(include=[np.number]).columns
+categorical_columns = df.select_dtypes(include=['object', 'category']).columns
+
+# Step 3: Standardize numerical data and one-hot encode categorical data
+scaler = StandardScaler()
+encoder = OneHotEncoder(sparse=False, handle_unknown='ignore')
+
+# Combine the transformers into a ColumnTransformer
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('num', scaler, numerical_columns),
+        ('cat', encoder, categorical_columns)
+    ])
+
+# Fit and transform the data
+X = preprocessor.fit_transform(df)
+
+# Step 6: Determine the optimal number of clusters (k)
+# Use the elbow method, silhouette score, or other method
+# For demonstration, we'll use a range of k values and find the optimal k using silhouette score
+from sklearn.metrics import silhouette_score
+
+k_range = range(2, 11)
+silhouette_scores = []
+
+for k in k_range:
+    kmeans = KMeans(n_clusters=k, random_state=42)
+    labels = kmeans.fit_predict(X)
+    score = silhouette_score(X, labels)
+    silhouette_scores.append(score)
+
+optimal_k = k_range[np.argmax(silhouette_scores)]
+
+# Step 7: Apply KMeans clustering
+kmeans = KMeans(n_clusters=optimal_k, random_state=42)
+labels = kmeans.fit_predict(X)
+
+# Add cluster labels to the original dataset
+df['Cluster'] = labels
+
+# Step 8: Analyze the clusters (optional)
+# For example, examine the cluster centroids or visualize the clusters
+print('Cluster centroids:', kmeans.cluster_centers_)
+
+# Step 9: Visualize the clusters
+plt.scatter(X[:, 0], X[:, 1], c=labels, cmap='viridis')
+plt.title(f'KMeans Clustering with {optimal_k} Clusters')
+plt.xlabel('Feature 1')
+plt.ylabel('Feature 2')
+plt.show()
+
+
+
+STEPS:-
+
+Performing KMeans clustering on a dataset that contains both categorical and numerical variables requires some additional preprocessing steps to handle the different types of data appropriately. Here's a step-by-step guide for performing KMeans clustering on such a dataset:
+
+Prepare Your Data:
+Handle Missing Values: Deal with any missing values in your dataset. Depending on the context, you can fill them in or remove them.
+Remove Outliers: If there are any extreme outliers, consider removing them as they may skew the clustering results.
+Separate Numerical and Categorical Variables:
+Split your dataset into two subsets: one containing numerical variables and the other containing categorical variables.
+Normalize or Standardize Numerical Data:
+Standardize: Use a method like StandardScaler from scikit-learn to standardize your numerical data.
+This ensures that each numerical feature contributes equally to the clustering process.
+Encode Categorical Variables:
+One-Hot Encoding: Convert categorical variables into a one-hot encoded format using pd.get_dummies() in pandas or OneHotEncoder from scikit-learn.
+This creates binary features for each category.
+Combine Processed Data:
+Combine the standardized numerical data and one-hot encoded categorical data into a single dataset.
+This combined dataset can be passed to the KMeans clustering algorithm.
+Determine the Optimal Number of Clusters (k):
+Use methods such as the elbow method, silhouette score, or gap statistic to find the optimal number of clusters (k).
+Experiment with different values of k and choose the one that provides the best clustering results.
+Apply KMeans Clustering:
+Import the KMeans class from scikit-learn.
+Create an instance of KMeans with the optimal number of clusters (n_clusters) and fit the model to the combined dataset.
+Obtain the cluster labels.
+Analyze the Clusters:
+Add the cluster labels to your original dataset to analyze the clusters.
+Visualize the data points and clusters using scatter plots or other visualizations to assess the clustering quality.
+Check the cluster centroids to understand the characteristics of each cluster.
+Adjust the Algorithm:
+If the clustering results are not satisfactory, consider adjusting the initialization method (init parameter) or the maximum number of iterations (max_iter) for the KMeans algorithm.
+Experiment with different hyperparameters if necessary.
+Interpret the Results:
+Examine the clusters to identify meaningful patterns and relationships in the data.
+Compare the results with domain knowledge to assess whether the clustering makes sense.
